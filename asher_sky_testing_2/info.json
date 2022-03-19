@@ -1,0 +1,13 @@
+{
+  "name": "asher_sky_testing",
+  "version": "0.0.1",
+  "title": "asher_sky testing mod",
+  "author": "asher_sky",
+  "contact": "",
+  "homepage": "",
+  "description": "",
+  "factorio_version": "1.1",
+  "dependencies": [
+	"base"
+	]
+}

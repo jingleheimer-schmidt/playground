@@ -1,7 +1,7 @@
 
 local spidertronTrailsColor = {
   type = "bool-setting",
-  name = "robot-trails-color",
+  name = "biter-trails-color",
   setting_type = "runtime-global",
   order = "a",
   default_value = true
@@ -9,7 +9,7 @@ local spidertronTrailsColor = {
 
 local spidertronTrailsGlow = {
   type = "bool-setting",
-  name = "robot-trails-glow",
+  name = "biter-trails-glow",
   setting_type = "runtime-global",
   order = "b",
   default_value = true
@@ -17,7 +17,7 @@ local spidertronTrailsGlow = {
 
 local spidertronTrailsTiptoeMode = {
   type = "bool-setting",
-  name = "robot-trails-tiptoe-mode",
+  name = "biter-trails-tiptoe-mode",
   setting_type = "runtime-global",
   order = "c",
   default_value = true
@@ -25,16 +25,15 @@ local spidertronTrailsTiptoeMode = {
 
 local spidertronTrailsPassengersOnly = {
   type = "bool-setting",
-  name = "robot-trails-passengers-only",
+  name = "biter-trails-passengers-only",
   setting_type = "runtime-global",
   order = "d",
   default_value = false
 }
 
-
 local spidertronTrailsScale = {
   type = "string-setting",
-  name = "robot-trails-scale",
+  name = "biter-trails-scale",
   setting_type = "runtime-global",
   order = "e",
   default_value = "5",
@@ -53,7 +52,7 @@ local spidertronTrailsScale = {
 
 local spidertronTrailsLength = {
   type = "string-setting",
-  name = "robot-trails-length",
+  name = "biter-trails-length",
   setting_type = "runtime-global",
   order = "f",
   default_value = "120",
@@ -72,7 +71,7 @@ local spidertronTrailsLength = {
 
 local spidertronTrailsColorSync = {
   type = "string-setting",
-  name = "robot-trails-color-type",
+  name = "biter-trails-color-type",
   setting_type = "runtime-global",
   order = "g",
   default_value = "spidertron",
@@ -84,7 +83,7 @@ local spidertronTrailsColorSync = {
 
 local spidertronTrailsPalette = {
   type = "string-setting",
-  name = "robot-trails-palette",
+  name = "biter-trails-palette",
   setting_type = "runtime-global",
   order = "h",
   default_value = "default",
@@ -99,7 +98,7 @@ local spidertronTrailsPalette = {
 
 local spidertronTrailsSpeed = {
   type = "string-setting",
-  name = "robot-trails-speed",
+  name = "biter-trails-speed",
   setting_type = "runtime-global",
   order = "i",
   default_value = "default",
@@ -114,7 +113,7 @@ local spidertronTrailsSpeed = {
 
 local spidertronTrailsBalance = {
   type = "string-setting",
-  name = "robot-trails-balance",
+  name = "biter-trails-balance",
   setting_type = "runtime-global",
   order = "j",
   default_value = "pretty",
@@ -136,6 +135,6 @@ data:extend({
   spidertronTrailsPalette,
   spidertronTrailsSpeed,
   spidertronTrailsBalance,
-  spidertronTrailsPassengersOnly,
-  spidertronTrailsTiptoeMode
+  -- spidertronTrailsPassengersOnly,
+  -- spidertronTrailsTiptoeMode
 })
