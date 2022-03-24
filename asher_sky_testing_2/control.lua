@@ -42,32 +42,32 @@ function make_rainbow(event_tick, unit_number, frequency, palette_choice)
 end
 
 local function initialize_settings()
-  if not global.settings then
-    global.settings = {}
+  if not global.data.settings then
+    global.data.settings = {}
   end
   local settings = settings.global
-  global.settings = {}
-  global.settings["biter-trails-color"] = settings["biter-trails-color"].value
-  global.settings["biter-trails-glow"] = settings["biter-trails-glow"].value
-  global.settings["biter-trails-length"] = settings["biter-trails-length"].value
-  global.settings["biter-trails-scale"] = settings["biter-trails-scale"].value
-  global.settings["biter-trails-color-type"] = settings["biter-trails-color-type"].value
-  global.settings["biter-trails-speed"] = settings["biter-trails-speed"].value
-  global.settings["biter-trails-palette"] = settings["biter-trails-palette"].value
-  global.settings["biter-trails-balance"] = settings["biter-trails-balance"].value
+  global.data.settings = {}
+  global.data.settings["biter-trails-color"] = settings["biter-trails-color"].value
+  global.data.settings["biter-trails-glow"] = settings["biter-trails-glow"].value
+  global.data.settings["biter-trails-length"] = settings["biter-trails-length"].value
+  global.data.settings["biter-trails-scale"] = settings["biter-trails-scale"].value
+  global.data.settings["biter-trails-color-type"] = settings["biter-trails-color-type"].value
+  global.data.settings["biter-trails-speed"] = settings["biter-trails-speed"].value
+  global.data.settings["biter-trails-palette"] = settings["biter-trails-palette"].value
+  global.data.settings["biter-trails-balance"] = settings["biter-trails-balance"].value
 end
 
 local function get_all_biters()
-  if not global.biters then
-    global.biters = {}
+  if not global.data.biters then
+    global.data.biters = {}
   end
-  if not global.sleeping_biters then
-    global.sleeping_biters = {}
+  if not global.data.sleeping_biters then
+    global.data.sleeping_biters = {}
   end
   for each, surface in pairs(game.surfaces) do
     local biters = surface.find_entities_filtered{type={"unit"}, force={"enemy"}}
     for every, biter in pairs(biters) do
-      global.biters[biter.unit_number] = {
+      global.data.sleeping_biters[biter.unit_number] = {
         biter = biter,
         position = biter.position,
         counter = 1
@@ -78,13 +78,59 @@ end
 
 local function add_biter(event)
   local biter = event.created_entity or event.entity
-  global.biters[biter.unit_number] = {
+  global.data.biters[biter.unit_number] = {
     biter = biter,
     position = biter.position,
     counter = 1
   }
   -- game.print("robot added: "..robot.unit_number)
 end
+
+local function get_player_forces()
+  if not global.data.player_forces then
+    global.data.player_forces = {}
+  end
+  for each, player in pairs(game.players) do
+    if player.valid and player.force then
+      local forces = global.data.player_forces
+      local force_name = player.force.name
+      if not forces[force_name] then
+        global.data.player_forces[force_name] = {
+          force = player.force,
+          number_of_players = 1
+        }
+      else
+        global.data.player_forces[force_name].number_of_players = forces[force_name].number_of_players + 1
+      end
+    end
+  end
+end
+
+script.on_event(defines.events.on_player_changed_force, function(event)
+  if not global.data.player_forces then
+    global.data.player_forces = {}
+  end
+  local forces = global.data.player_forces
+  local player = game.get_player(event.player_index)
+  local force_name = player.force.name
+  if not forces[force_name] then
+    global.data.player_forces[force_name] = {
+      force = player.force,
+      number_of_players = 1
+    }
+  else
+    global.data.player_forces[force_name].number_of_players = forces[force_name].number_of_players + 1
+  end
+  local old_force_name = event.force.name
+  if forces[old_force_name] then
+    local number_of_players = forces[old_force_name].number_of_players
+    if number_of_players == 1 then
+      global.data.player_forces[old_force_name] = nil
+    else
+      global.data.player_forces[old_force_name].number_of_players = number_of_players - 1
+    end
+  end
+end)
 
 -- script.on_event(defines.events.on_built_entity, function(event)
 --   add_biter(event)
@@ -131,13 +177,21 @@ script.on_event(defines.events.on_runtime_mod_setting_changed, function()
 end)
 
 script.on_configuration_changed(function()
+  if not global.data then
+    global.data = {}
+  end
   initialize_settings()
   get_all_biters()
+  get_player_forces()
 end)
 
 script.on_init(function()
+  if not global.data then
+    global.data = {}
+  end
   initialize_settings()
   get_all_biters()
+  get_player_forces()
 end)
 
 local function make_trails(settings, event)
@@ -151,37 +205,98 @@ local function make_trails(settings, event)
     local frequency = speeds[settings["biter-trails-speed"]]
     local palette_choice = palette[settings["biter-trails-palette"]]
     -- local tiptoe_mode = settings["biter-trails-tiptoe-mode"]
-    if global.sleeping_biters then
-      local sleeping_biters = global.sleeping_biters
-      global.from_key = table.for_n_of(sleeping_biters, global.from_key, 234, function(data, key)
+    local global_data = global.data
+    local new_biter_data = global_data.biters
+    local new_sleeping_biter_data = global_data.sleeping_biters
+    local forces = global_data.player_forces
+    local num = 0
+    local event_tick = event.tick
+    local group_colors = global_data.group_colors
+    if not group_colors then
+      global_data.group_colors = {}
+    else
+      for group_number, data in pairs(group_colors) do
+        if not data.group.valid then
+          group_colors[group_number] = nil
+        else
+          group_colors[group_number].color = make_rainbow(event_tick, group_number, frequency, palette_choice)
+        end
+      end
+    end
+    if global_data.sleeping_biters then
+      local sleeping_biters = global_data.sleeping_biters
+      local nth_tick = 1
+      if event.nth_tick then
+        nth_tick = event.nth_tick
+      end
+      num = table_size(sleeping_biters) / 120 * nth_tick
+      global.data.from_key = table.for_n_of(sleeping_biters, global_data.from_key, num, function(data, key)
         if data.biter and data.biter.valid then
+          local biter = data.biter
           local last_position = data.position
           local current_position = data.biter.position
-          local same_position = last_position and (last_position.x == current_position.x) and (last_position.y == current_position.y)
-          if not same_position then
-            global.biters[data.biter.unit_number] = {
-              biter = data.biter,
+          local current_x = current_position.x
+          local current_y = current_position.y
+          local same_position = last_position and (last_position.x == current_x) and (last_position.y == current_position.y)
+          local chunk_is_visible = false
+          for _, data in pairs(forces) do
+            if data.force.is_chunk_visible(biter.surface, {current_x / 32, current_y / 32}) then
+              chunk_is_visible = true
+            end
+          end
+          if (not same_position) and chunk_is_visible then
+            new_biter_data[biter.unit_number] = {
+              biter = biter,
               position = current_position,
               counter = 1
             }
-            global.sleeping_biters[data.biter.unit_number] = nil
+            new_sleeping_biter_data[data.biter.unit_number] = nil
           end
         end
       end)
     end
-    local biters = global.biters
+    local biters = global_data.biters
     if biters then
-      local new_biter_data = {}
+      -- local new_biter_data = {}
       for unit_number, data in pairs(biters) do
         local biter = data.biter
         if not biter.valid then
-          global.biters[unit_number] = nil
+          new_biter_data[unit_number] = nil
         else
           local last_position = data.position
           local current_position = biter.position
           local same_position = last_position and (last_position.x == current_position.x) and (last_position.y == current_position.y)
-          if not same_position then
-            local event_tick = event.tick
+          local chunk_is_visible = false
+          for _, data in pairs(forces) do
+            if data.force.is_chunk_visible(biter.surface, {current_position.x / 32, current_position.y / 32}) then
+              chunk_is_visible = true
+            end
+          end
+          -- if not same_position then
+          if (not same_position) and chunk_is_visible then
+            -- local event_tick = event.tick
+            -- local uuid = unit_number
+            local color = {}
+            if biter.unit_group then
+              local group_number = biter.unit_group.group_number
+              if group_colors then
+                if group_colors[group_number] then
+                  color = group_colors[group_number].color
+                else
+                  -- color = make_rainbow(event_tick, group_number, frequency, palette_choice)
+                  -- group_colors[group_number] = {
+                  --   group = biter.unit_group,
+                  --   color = color
+                  -- }
+                  group_colors[group_number] = {
+                    group = biter.unit_group,
+                    color = {}
+                  }
+                end
+              end
+            else
+              color = make_rainbow(event_tick, unit_number, frequency, palette_choice)
+            end
             -- local color = {}
             -- if color_mode == "biter" then
             --   color = biter.color
@@ -189,7 +304,7 @@ local function make_trails(settings, event)
             -- else
             --   color = make_rainbow(event_tick, unit_number, settings, frequency, palette_choice)
             -- end
-            local color = make_rainbow(event_tick, unit_number, frequency, palette_choice)
+            -- local color = make_rainbow(event_tick, uuid, frequency, palette_choice)
             -- local color = {.5,.5,.5}
             -- local last_position = data.position
             -- local counter = data.counter
@@ -228,6 +343,16 @@ local function make_trails(settings, event)
                 color = color,
               }
             end
+            -- if sprite or light then
+            --   surface.create_particle{
+            --     name = "explosion-stone-particle-medium",
+            --     position = current_position,
+            --     movement = {0,0},
+            --     height = 10,
+            --     vertical_speed = 10,
+            --     frame_speed = 10
+            --   }
+            -- end
             new_biter_data[unit_number] = {
               biter = biter,
               position = current_position,
@@ -235,13 +360,27 @@ local function make_trails(settings, event)
             }
           else
             local counter = data.counter
-            if counter > 555 then
-              global.sleeping_biters[unit_number] = {
+            -- local chunk_is_visible = false
+            -- for _, data in pairs(forces) do
+            --   if data.force.is_chunk_visible(biter.surface, {current_position.x / 32, current_position.y / 32}) then
+            --     chunk_is_visible = true
+            --   end
+            -- end
+            -- if (not chunk_is_visible) and (counter > 60) then
+            --   global.data.sleeping_biters[unit_number] = {
+            --     biter = biter,
+            --     position = current_position,
+            --     counter = 1
+            --   }
+            --   global.data.biters[unit_number] = nil
+            -- elseif counter > 333 then
+            if counter > 333 then
+              new_sleeping_biter_data[unit_number] = {
                 biter = biter,
                 position = current_position,
                 counter = 1
               }
-              global.biters[unit_number] = nil
+              new_biter_data[unit_number] = nil
             else
               new_biter_data[unit_number] = {
                 biter = biter,
@@ -252,39 +391,59 @@ local function make_trails(settings, event)
           end
         end
       end
-      global.biters = new_biter_data
+      global.data.biters = new_biter_data
+      global.data.sleeping_biters = new_sleeping_biter_data
+      global.data.group_colors = group_colors
+    end
+      game.print("[color=blue]active biters: "..table_size(global.data.biters)..", sleeping biters: "..table_size(global.data.sleeping_biters)..", checked: "..num.."[/color]")
+  end
+end
+
+local function test()
+  for i = 1,600 do
+    local chunk_is_visible = false
+    local forces = game.forces
+    local player = game.get_player("asher_sky")
+    local position = player.position
+    for each, force in pairs(forces) do
+      if force.is_chunk_visible(player.surface, {position.x / 32, position.y / 32}) then
+        chunk_is_visible = true
+      end
     end
   end
-  -- game.print("active biters: "..table_size(global.biters)..", sleeping biters: "..table_size(global.sleeping_biters))
 end
 
 script.on_event(defines.events.on_tick, function(event)
-  if not global.settings then
+  if not global.data.settings then
     initialize_settings()
   end
-  local settings = global.settings
+  local settings = global.data.settings
   if settings["biter-trails-balance"] == "super-pretty" then
     make_trails(settings, event)
+    -- test()
   end
 end)
 
 script.on_nth_tick(2, function(event)
-  local settings = global.settings
+  local settings = global.data.settings
   if settings["biter-trails-balance"] == "pretty" then
     make_trails(settings, event)
+    -- test()
   end
 end)
 
 script.on_nth_tick(3, function(event)
-  local settings = global.settings
+  local settings = global.data.settings
   if settings["biter-trails-balance"] == "balanced" then
     make_trails(settings, event)
+    -- test()
   end
 end)
 
 script.on_nth_tick(4, function(event)
-  local settings = global.settings
+  local settings = global.data.settings
   if settings["biter-trails-balance"] == "performance" then
     make_trails(settings, event)
+    -- test()
   end
 end)
