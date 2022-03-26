@@ -218,8 +218,8 @@ local function make_trails(settings, event)
       global.data.group_colors = {}
       -- game.print("group colors doesn't exist, creating it now")
     else
-      for group_number, dataa in pairs(group_colors) do
-        if not dataa.group and dataa.group.valid then
+      for group_number, data in pairs(group_colors) do
+        if not data.group and data.group.valid then
           group_colors[group_number] = nil
         else
           group_colors[group_number].color = make_rainbow(event_tick, group_number, frequency, palette_choice)
@@ -227,15 +227,15 @@ local function make_trails(settings, event)
         end
       end
     end
-    if global_data.sleeping_biters then
-      local sleeping_biters = global_data.sleeping_biters
-      local nth_tick = 1
-      if event.nth_tick then
-        nth_tick = event.nth_tick
-      end
+    if new_sleeping_biter_data then
+      -- local sleeping_biters = new_sleeping_biter_data
+      -- local nth_tick = 1
+      -- if event.nth_tick then
+      --   nth_tick = event.nth_tick
+      -- end
       -- num = table_size(sleeping_biters) / 120 * nth_tick
       num = table_size(sleeping_biters) * 0.008
-      global.data.from_key = table.for_n_of(sleeping_biters, global_data.from_key, num, function(data, key)
+      global.data.from_key = table.for_n_of(new_sleeping_biter_data, global_data.from_key, num, function(data, key)
         if data.biter and data.biter.valid then
           local biter = data.biter
           local last_position = data.position
@@ -260,10 +260,10 @@ local function make_trails(settings, event)
         end
       end)
     end
-    local biters = global_data.biters
-    if biters then
+    -- local biters = global_data.biters
+    if new_biter_data then
       -- local new_biter_data = {}
-      for unit_number, data in pairs(biters) do
+      for unit_number, data in pairs(new_biter_data) do
         local biter = data.biter
         if not biter.valid then
           new_biter_data[unit_number] = nil
