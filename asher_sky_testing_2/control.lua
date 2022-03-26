@@ -4,6 +4,7 @@ Spider Trails control script © 2022 by asher_sky is licensed under Attribution-
 --]]
 
 local table = require("__flib__.table")
+local math = require("__flib__.math")
 
 local speeds = {
   veryslow = 0.010,
@@ -213,13 +214,16 @@ local function make_trails(settings, event)
     local event_tick = event.tick
     local group_colors = global_data.group_colors
     if not group_colors then
-      global_data.group_colors = {}
+      group_colors = {}
+      global.data.group_colors = {}
+      -- game.print("group colors doesn't exist, creating it now")
     else
-      for group_number, data in pairs(group_colors) do
-        if not data.group.valid then
+      for group_number, dataa in pairs(group_colors) do
+        if not dataa.group and dataa.group.valid then
           group_colors[group_number] = nil
         else
           group_colors[group_number].color = make_rainbow(event_tick, group_number, frequency, palette_choice)
+          -- game.print(group_number)
         end
       end
     end
@@ -229,7 +233,8 @@ local function make_trails(settings, event)
       if event.nth_tick then
         nth_tick = event.nth_tick
       end
-      num = table_size(sleeping_biters) / 120 * nth_tick
+      -- num = table_size(sleeping_biters) / 120 * nth_tick
+      num = table_size(sleeping_biters) * 0.008
       global.data.from_key = table.for_n_of(sleeping_biters, global_data.from_key, num, function(data, key)
         if data.biter and data.biter.valid then
           local biter = data.biter
@@ -265,34 +270,55 @@ local function make_trails(settings, event)
         else
           local last_position = data.position
           local current_position = biter.position
-          local same_position = last_position and (last_position.x == current_position.x) and (last_position.y == current_position.y)
-          local chunk_is_visible = false
-          for _, data in pairs(forces) do
-            if data.force.is_chunk_visible(biter.surface, {current_position.x / 32, current_position.y / 32}) then
-              chunk_is_visible = true
+          local current_x = current_position.x
+          local current_y = current_position.y
+          local same_position = last_position and (last_position.x == current_x) and (last_position.y == current_y)
+          local chunk_is_hidden = false
+          local visible_check_timer = data.visible_check_timer
+          if visible_check_timer then
+            if visible_check_timer > 600 then
+              for _, data in pairs(forces) do
+                if not data.force.is_chunk_visible(biter.surface, {current_x / 32, current_y / 32}) then
+                  chunk_is_hidden = true
+                end
+              end
+              visible_check_timer = 1
+            else
+              visible_check_timer = visible_check_timer + 1
             end
+          else
+            new_biter_data[unit_number].visible_check_timer = 1
           end
           -- if not same_position then
-          if (not same_position) and chunk_is_visible then
+          if (not same_position) and (not chunk_is_hidden) then
             -- local event_tick = event.tick
             -- local uuid = unit_number
             local color = {}
             if biter.unit_group then
               local group_number = biter.unit_group.group_number
+              -- game.print(group_number.." group number exists")
               if group_colors then
+                -- game.print("group colors exists")
                 if group_colors[group_number] then
                   color = group_colors[group_number].color
+                  -- game.print("group color assigned")
                 else
-                  -- color = make_rainbow(event_tick, group_number, frequency, palette_choice)
-                  -- group_colors[group_number] = {
-                  --   group = biter.unit_group,
-                  --   color = color
-                  -- }
+                  color = make_rainbow(event_tick, group_number, frequency, palette_choice)
                   group_colors[group_number] = {
                     group = biter.unit_group,
-                    color = {}
+                    color = color
                   }
+                  -- group_colors[group_number] = {
+                  --   group = biter.unit_group,
+                  --   color = {}
+                  -- }
                 end
+              -- else
+              --   color = make_rainbow(event_tick, group_number, frequency, palette_choice)
+              --   group_colors[group_number] = {
+              --     group = biter.unit_group,
+              --     color = color
+              --   }
               end
             else
               color = make_rainbow(event_tick, unit_number, frequency, palette_choice)
@@ -353,6 +379,7 @@ local function make_trails(settings, event)
             --     frame_speed = 10
             --   }
             -- end
+            -- game.print("[gps="..biter.position.x..","..biter.position.y.."]")
             new_biter_data[unit_number] = {
               biter = biter,
               position = current_position,
@@ -394,8 +421,10 @@ local function make_trails(settings, event)
       global.data.biters = new_biter_data
       global.data.sleeping_biters = new_sleeping_biter_data
       global.data.group_colors = group_colors
+      global.data.visible_check_timer = visible_check_timer
     end
-      game.print("[color=blue]active biters: "..table_size(global.data.biters)..", sleeping biters: "..table_size(global.data.sleeping_biters)..", checked: "..num.."[/color]")
+    -- game.print("[color=blue]active biters: "..table_size(global.data.biters)..", sleeping biters: "..math.round(table_size(global.data.sleeping_biters))..", checked: "..num..", group_colors: "..table_size(global.data.group_colors).."[/color]")
+    game.print("[color=blue]active biters: "..table_size(global.data.biters)..", sleeping biters: "..math.round(table_size(global.data.sleeping_biters))..", checked: "..num.."[/color]")
   end
 end
 
