@@ -31,7 +31,6 @@ function make_rainbow(event_tick, unit_number, frequency, palette_choice)
   -- local frequency = speeds[settings["biter-trails-speed"]]
   -- local modifier = unit_number + event_tick
   local freq_mod = frequency * (unit_number + event_tick)
-  -- local palette_choice = palette[settings["biter-trails-palette"]]
   local amplitude = palette_choice.amplitude
   local center = palette_choice.center
   return {
@@ -84,7 +83,6 @@ local function add_biter(event)
     position = biter.position,
     counter = 1
   }
-  -- game.print("robot added: "..robot.unit_number)
 end
 
 local function get_player_forces()
@@ -216,14 +214,12 @@ local function make_trails(settings, event)
     if not group_colors then
       group_colors = {}
       global.data.group_colors = {}
-      -- game.print("group colors doesn't exist, creating it now")
     else
       for group_number, data in pairs(group_colors) do
         if not data.group and data.group.valid then
           group_colors[group_number] = nil
         else
           group_colors[group_number].color = make_rainbow(event_tick, group_number, frequency, palette_choice)
-          -- game.print(group_number)
         end
       end
     end
@@ -234,7 +230,7 @@ local function make_trails(settings, event)
       --   nth_tick = event.nth_tick
       -- end
       -- num = table_size(sleeping_biters) / 120 * nth_tick
-      num = table_size(sleeping_biters) * 0.008
+      num = table_size(new_sleeping_biter_data) * 0.008
       global.data.from_key = table.for_n_of(new_sleeping_biter_data, global_data.from_key, num, function(data, key)
         if data.biter and data.biter.valid then
           local biter = data.biter
@@ -276,7 +272,7 @@ local function make_trails(settings, event)
           local chunk_is_hidden = false
           local visible_check_timer = data.visible_check_timer
           if visible_check_timer then
-            if visible_check_timer > 600 then
+            if visible_check_timer > 900 then
               for _, data in pairs(forces) do
                 if not data.force.is_chunk_visible(biter.surface, {current_x / 32, current_y / 32}) then
                   chunk_is_hidden = true
@@ -296,53 +292,22 @@ local function make_trails(settings, event)
             local color = {}
             if biter.unit_group then
               local group_number = biter.unit_group.group_number
-              -- game.print(group_number.." group number exists")
               if group_colors then
-                -- game.print("group colors exists")
                 if group_colors[group_number] then
                   color = group_colors[group_number].color
-                  -- game.print("group color assigned")
                 else
                   color = make_rainbow(event_tick, group_number, frequency, palette_choice)
                   group_colors[group_number] = {
                     group = biter.unit_group,
                     color = color
                   }
-                  -- group_colors[group_number] = {
-                  --   group = biter.unit_group,
-                  --   color = {}
-                  -- }
                 end
-              -- else
-              --   color = make_rainbow(event_tick, group_number, frequency, palette_choice)
-              --   group_colors[group_number] = {
-              --     group = biter.unit_group,
-              --     color = color
-              --   }
               end
             else
               color = make_rainbow(event_tick, unit_number, frequency, palette_choice)
             end
-            -- local color = {}
-            -- if color_mode == "biter" then
-            --   color = biter.color
-            --   color.a = 1
-            -- else
-            --   color = make_rainbow(event_tick, unit_number, settings, frequency, palette_choice)
-            -- end
-            -- local color = make_rainbow(event_tick, uuid, frequency, palette_choice)
-            -- local color = {.5,.5,.5}
-            -- local last_position = data.position
-            -- local counter = data.counter
-            -- local current_position = biter.position
             local surface = biter.surface
-            -- local same_position = last_position and (last_position.x == current_position.x) and (last_position.y == current_position.y)
-            -- local counter_is_less_than_goal = counter and (counter < 15)
-            -- game.print(game.tick.."robot: "..unit_number.." checked again 1")
-            -- if ((not same_position) or (same_position and counter_is_less_than_goal)) then
-              -- game.print(game.tick.."robot: "..unit_number.." checked again 2")
-            -- if biter.effective_speed > 0 then
-            -- if not same_position then
+
             if sprite then
               -- sprite = rendering.draw_sprite{
               rendering.draw_sprite{
@@ -387,20 +352,6 @@ local function make_trails(settings, event)
             }
           else
             local counter = data.counter
-            -- local chunk_is_visible = false
-            -- for _, data in pairs(forces) do
-            --   if data.force.is_chunk_visible(biter.surface, {current_position.x / 32, current_position.y / 32}) then
-            --     chunk_is_visible = true
-            --   end
-            -- end
-            -- if (not chunk_is_visible) and (counter > 60) then
-            --   global.data.sleeping_biters[unit_number] = {
-            --     biter = biter,
-            --     position = current_position,
-            --     counter = 1
-            --   }
-            --   global.data.biters[unit_number] = nil
-            -- elseif counter > 333 then
             if counter > 333 then
               new_sleeping_biter_data[unit_number] = {
                 biter = biter,
@@ -425,20 +376,6 @@ local function make_trails(settings, event)
     end
     -- game.print("[color=blue]active biters: "..table_size(global.data.biters)..", sleeping biters: "..math.round(table_size(global.data.sleeping_biters))..", checked: "..num..", group_colors: "..table_size(global.data.group_colors).."[/color]")
     game.print("[color=blue]active biters: "..table_size(global.data.biters)..", sleeping biters: "..math.round(table_size(global.data.sleeping_biters))..", checked: "..num.."[/color]")
-  end
-end
-
-local function test()
-  for i = 1,600 do
-    local chunk_is_visible = false
-    local forces = game.forces
-    local player = game.get_player("asher_sky")
-    local position = player.position
-    for each, force in pairs(forces) do
-      if force.is_chunk_visible(player.surface, {position.x / 32, position.y / 32}) then
-        chunk_is_visible = true
-      end
-    end
   end
 end
 
