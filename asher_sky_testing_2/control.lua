@@ -234,6 +234,7 @@ local function make_trails(settings, event)
       global.data.from_key = table.for_n_of(new_sleeping_biter_data, global_data.from_key, num, function(data, key)
         if data.biter and data.biter.valid then
           local biter = data.biter
+          local unit_number = biter.unit_number
           local last_position = data.position
           local current_position = data.biter.position
           local current_x = current_position.x
@@ -246,12 +247,12 @@ local function make_trails(settings, event)
             end
           end
           if (not same_position) and chunk_is_visible then
-            new_biter_data[biter.unit_number] = {
+            new_biter_data[unit_number] = {
               biter = biter,
               position = current_position,
               counter = 1
             }
-            new_sleeping_biter_data[data.biter.unit_number] = nil
+            new_sleeping_biter_data[unit_number] = nil
           end
         end
       end)
@@ -372,7 +373,7 @@ local function make_trails(settings, event)
       global.data.biters = new_biter_data
       global.data.sleeping_biters = new_sleeping_biter_data
       global.data.group_colors = group_colors
-      global.data.visible_check_timer = visible_check_timer
+      -- global.data.visible_check_timer = visible_check_timer
     end
     -- game.print("[color=blue]active biters: "..table_size(global.data.biters)..", sleeping biters: "..math.round(table_size(global.data.sleeping_biters))..", checked: "..num..", group_colors: "..table_size(global.data.group_colors).."[/color]")
     game.print("[color=blue]active biters: "..table_size(global.data.biters)..", sleeping biters: "..math.round(table_size(global.data.sleeping_biters))..", checked: "..num.."[/color]")
