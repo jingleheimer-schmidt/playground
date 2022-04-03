@@ -388,7 +388,7 @@ local function make_trails(event_tick)
     local biter_data = global_data.biters
     local sleeping_biter_data = global_data.sleeping_biters
     local forces = global_data.player_forces
-    -- local num = 50
+    local num = 0
     -- local event_tick = event.tick
     local group_colors = global_data.group_colors
     if not group_colors then
