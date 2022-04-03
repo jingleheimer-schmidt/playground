@@ -557,14 +557,16 @@ local function make_trails(event_tick)
       -- global.data.visible_check_timer = visible_check_timer
     end
     -- game.print("[color=blue]active biters: "..table_size(global.data.biters)..", sleeping biters: "..math.round(table_size(global.data.sleeping_biters))..", checked: "..num..", group_colors: "..table_size(global.data.group_colors).."[/color]")
+    -- game.print(event_tick..": [color=blue]active biters: "..table_size(global.data.biters)..", sleeping biters: "..math.round(table_size(global.data.sleeping_biters))..", checked: "..num.."[/color]")
     game.print("[color=blue]active biters: "..table_size(global.data.biters)..", sleeping biters: "..math.round(table_size(global.data.sleeping_biters))..", checked: "..num.."[/color]")
   end
 end
 
 script.on_event(defines.events.on_tick, function(event)
-  if event.tick % mod_settings["biter-trails-balance"] then
+  if (event.tick % mod_settings["biter-trails-balance"]) == 0 then
     make_trails(event.tick) -- change make trails to use mod_settings upvalue, and change paramater to event_tick directly
   end
+  -- game.print(event.tick .. ": " .. event.tick % mod_settings["biter-trails-balance"])
 end)
 
 -- script.on_event(defines.events.on_tick, function(event)
