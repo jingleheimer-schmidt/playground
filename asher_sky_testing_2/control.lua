@@ -420,19 +420,21 @@ local function make_trails(event_tick)
           local current_x = current_position.x
           local current_y = current_position.y
           local same_position = last_position and (last_position.x == current_x) and (last_position.y == current_position.y)
-          local chunk_is_visible = false
-          for _, data in pairs(forces) do
-            if data.force.is_chunk_visible(biter.surface, {current_x / 32, current_y / 32}) then
-              chunk_is_visible = true
+          if not same_position then
+            local chunk_is_visible = false
+            for _, data in pairs(forces) do
+              if data.force.is_chunk_visible(biter.surface, {current_x / 32, current_y / 32}) then
+                chunk_is_visible = true
+              end
             end
-          end
-          if (not same_position) and chunk_is_visible then
-            biter_data[unit_number] = {
-              biter = biter,
-              position = current_position,
-              counter = 1
-            }
-            sleeping_biter_data[unit_number] = nil
+            if chunk_is_visible then
+              biter_data[unit_number] = {
+                biter = biter,
+                position = current_position,
+                counter = 1
+              }
+              sleeping_biter_data[unit_number] = nil
+            end
           end
         end
       end)
